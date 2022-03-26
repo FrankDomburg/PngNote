@@ -1,10 +1,13 @@
 package io.github.karino2.pngnote
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.util.AttributeSet
 import android.util.DisplayMetrics
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,6 +45,9 @@ data class Thumbnail(val page: Bitmap, val bg: Bitmap?)
 
 
 class BookListActivity : ComponentActivity() {
+
+    private lateinit var viewModel : BookListActivityViewModel
+
     private var _url : Uri? = null
 
     private val getRootDirUrl = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
@@ -122,6 +128,11 @@ class BookListActivity : ComponentActivity() {
         if(true == files.value?.isNotEmpty()) {
             reloadBookList(_url!!)
         }
+    }
+
+    override fun onCreateView(name: String, context: Context, attrs: AttributeSet): View? {
+        viewModel = ModelViewFactory(application = application).create(BookListActivityViewModel::class.java)
+        return super.onCreateView(name, context, attrs)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
