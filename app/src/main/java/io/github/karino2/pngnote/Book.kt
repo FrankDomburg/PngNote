@@ -144,10 +144,7 @@ data class FastFile(val uri: Uri, val name: String, val lastModified: Long, val 
 
 
 class BookList(val dir: FastFile, val resolver: ContentResolver) {
-    companion object {
 
-        fun showMessage(ctx: Context, msg : String) = Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
-    }
 }
 
 

@@ -29,6 +29,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import io.github.karino2.pngnote.ui.theme.PngNoteTheme
+import io.github.karino2.pngnote.utils.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -64,7 +65,7 @@ class BookActivity : ComponentActivity() {
         }
     }
 
-    private fun showMessage(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+
 
 
     private val initCount = MutableLiveData(0)
@@ -263,7 +264,7 @@ class BookActivity : ComponentActivity() {
                                     if(canUndo) {
                                         undoCount.value = undoCount.value!!+1
                                     } else {
-                                        showMessage("Not yet undo-able.")
+                                        toast("Not yet undo-able.")
                                     }
                                    }, enabled=true) {
                                     Icon(painter = painterResource(id = R.drawable.outline_undo), contentDescription = "Undo")

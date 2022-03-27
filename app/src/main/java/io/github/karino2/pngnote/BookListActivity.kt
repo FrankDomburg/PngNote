@@ -38,6 +38,7 @@ import androidx.lifecycle.*
 import io.github.karino2.pngnote.data.preferences.PrefManager
 import io.github.karino2.pngnote.ui.theme.PngNoteTheme
 import io.github.karino2.pngnote.ui.theme.booxTextButtonColors
+import io.github.karino2.pngnote.utils.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -64,8 +65,6 @@ class BookListActivity : ComponentActivity() {
         get() = PrefManager.getUri()
 
     private fun writeLastUri(uri: Uri) = PrefManager.setUri(uri)
-
-    private fun showMessage(msg: String) = BookList.showMessage(this, msg)
 
     private fun openRootDir(url: Uri) {
         _url = url
@@ -171,7 +170,7 @@ class BookListActivity : ComponentActivity() {
                 return openRootDir(it)
             }
         } catch(_: Exception) {
-            showMessage("Can't open dir. Please re-open.")
+            toast("Can't open dir. Please re-open.")
         }
         getRootDirUrl.launch(null)
     }
@@ -182,7 +181,7 @@ class BookListActivity : ComponentActivity() {
             rootDir.createDirectory(newBookName)
             openRootDir(_url!!)
         } catch(_: Exception) {
-            showMessage("Can't create book directory ($newBookName).")
+            toast("Can't create book directory ($newBookName).")
         }
     }
 
