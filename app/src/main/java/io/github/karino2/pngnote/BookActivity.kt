@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 import kotlin.concurrent.withLock
+import io.github.karino2.pngnote.utils.FastFile
 
 class BookActivity : ComponentActivity() {
     companion object {

@@ -1,8 +1,10 @@
 package io.github.karino2.pngnote
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.util.AttributeSet
@@ -38,11 +40,55 @@ import androidx.lifecycle.*
 import io.github.karino2.pngnote.data.preferences.PrefManager
 import io.github.karino2.pngnote.ui.theme.PngNoteTheme
 import io.github.karino2.pngnote.ui.theme.booxTextButtonColors
+import io.github.karino2.pngnote.utils.FastFile
 import io.github.karino2.pngnote.utils.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-data class Thumbnail(val page: Bitmap, val bg: Bitmap?)
+data class Thumbnail(val page: Bitmap = blankBitmapFg, val bg: Bitmap = blankBitmapBg)
+{
+    companion object {
+        /** Blank Page Foreground */
+        private val blankBitmapFg: Bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply { eraseColor(
+            android.graphics.Color.WHITE) }
+        /** Blank Page Background */
+        private val blankBitmapBg: Bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply { eraseColor(
+            android.graphics.Color.LTGRAY) }
+
+        private fun loadBitmapThumbnail(file: FastFile, sampleSize: Int, resolver: ContentResolver) :Bitmap {
+            return resolver.openFileDescriptor(file.uri, "r").use {
+                val option = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+                BitmapFactory.decodeFileDescriptor(it!!.fileDescriptor, null, option)
+            }
+        }
+
+        private fun loadThumbnail(
+            bookDir: FastFile,
+            displayName: String,
+            resolver: ContentResolver
+        ): Bitmap? {
+            return bookDir.findFile(displayName)?.let { loadBitmapThumbnail(it, 3, resolver) }
+        }
+
+        /**
+         *
+         * Creates a thumbnail based on the FastFile reference and IO Access
+         * If different layouts per page are desired, we are doing it based on
+         * file naming convention (add -bg to filename)
+         *
+         * TODO Or make thumbnail based on JSON linking pages and to their backgrounds - so that backgrounds are referenced (needs refinement)
+         *
+         * This is to replace the stuff in BookListActivity - for now
+         *
+         */
+
+        fun fromFastFileDirect(source: FastFile, resolver: ContentResolver) : Thumbnail {
+            val page = loadThumbnail(source, "0000.png", resolver) ?: blankBitmapFg
+            val bg = loadThumbnail(source, "0000-bg.png", resolver) ?: blankBitmapBg
+            return Thumbnail(page, bg)
+        }
+    }
+}
 
 
 class BookListActivity : ComponentActivity() {
@@ -74,12 +120,11 @@ class BookListActivity : ComponentActivity() {
     private val files = MutableLiveData(emptyList<FastFile>())
     private val thumbnails =  Transformations.switchMap(files) { flist ->
         liveData {
-            emit(flist.map { Thumbnail(blankBitmap, null) })
+            emit(flist.map { Thumbnail() })
             withContext(lifecycleScope.coroutineContext + Dispatchers.IO) {
                 val thumbs = flist.map {
-                    val page = bookIO.loadThumbnail(it) ?: blankBitmap
-                    val bg = bookIO.loadBgThumbnail(it)
-                    Thumbnail(page, bg)
+                    Thumbnail.fromFastFileDirect(it, bookIO.getResolver())
+
                 }
                 withContext(Dispatchers.Main) {
                     emit(thumbs)
