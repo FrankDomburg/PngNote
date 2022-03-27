@@ -81,13 +81,6 @@ class BookIO(private val resolver: ContentResolver) {
         return bookDir.findFile(displayName)?.let { loadBitmapThumbnail(it, 3) }
     }
 
-    fun loadThumbnail(bookDir: FastFile) : Bitmap? {
-        return loadThumbnail(bookDir, "0000.png")
-    }
-
-    fun loadBgThumbnail(bookDir: FastFile) : Bitmap? {
-        return loadThumbnail(bookDir, "background.png")
-    }
 
 
     fun loadPageThumbnail(file: FastFile) = loadBitmapThumbnail(file, 4)

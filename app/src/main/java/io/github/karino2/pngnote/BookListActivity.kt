@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.os.StrictMode
 import android.util.AttributeSet
 import android.util.DisplayMetrics
 import android.view.View
@@ -16,7 +17,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.material.ButtonDefaults.textButtonColors
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
@@ -29,9 +29,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -45,15 +49,18 @@ import io.github.karino2.pngnote.utils.toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-data class Thumbnail(val page: Bitmap = blankBitmapFg, val bg: Bitmap = blankBitmapBg)
+
+
+data class Thumbnail private constructor(val page: Bitmap, val bg: Bitmap, val thumbSize : Pair<Int, Int>)
 {
+
     companion object {
         /** Blank Page Foreground */
-        private val blankBitmapFg: Bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply { eraseColor(
-            android.graphics.Color.WHITE) }
-        /** Blank Page Background */
-        private val blankBitmapBg: Bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply { eraseColor(
+        private fun blankBitmapFg(size: Pair<Int, Int>): Bitmap = Bitmap.createBitmap(size.first, size.second, Bitmap.Config.ARGB_8888).apply { eraseColor(
             android.graphics.Color.LTGRAY) }
+        /** Blank Page Background */
+        private fun blankBitmapBg(size: Pair<Int, Int>): Bitmap = Bitmap.createBitmap(size.first, size.second, Bitmap.Config.ARGB_8888).apply { eraseColor(
+            android.graphics.Color.WHITE) }
 
         private fun loadBitmapThumbnail(file: FastFile, sampleSize: Int, resolver: ContentResolver) :Bitmap {
             return resolver.openFileDescriptor(file.uri, "r").use {
@@ -82,11 +89,17 @@ data class Thumbnail(val page: Bitmap = blankBitmapFg, val bg: Bitmap = blankBit
          *
          */
 
-        fun fromFastFileDirect(source: FastFile, resolver: ContentResolver) : Thumbnail {
-            val page = loadThumbnail(source, "0000.png", resolver) ?: blankBitmapFg
-            val bg = loadThumbnail(source, "0000-bg.png", resolver) ?: blankBitmapBg
-            return Thumbnail(page, bg)
+        fun fromFastFileDirect(source: FastFile, resolver: ContentResolver, size: Pair<Int, Int> = Pair(100,100)) : Thumbnail {
+            val page = loadThumbnail(source, "0000.png", resolver) ?: blankBitmapFg(size)
+            val bg = loadThumbnail(source, "0000-bg.png", resolver) ?: blankBitmapBg(size)
+            return Thumbnail(page, bg, size)
         }
+
+        fun empty(size: Pair<Int, Int> = Pair(100,100)) : Thumbnail {
+            return Thumbnail(blankBitmapFg(size), blankBitmapBg(size), size)
+        }
+
+
     }
 }
 
@@ -120,10 +133,10 @@ class BookListActivity : ComponentActivity() {
     private val files = MutableLiveData(emptyList<FastFile>())
     private val thumbnails =  Transformations.switchMap(files) { flist ->
         liveData {
-            emit(flist.map { Thumbnail() })
+            emit(flist.map { Thumbnail.empty(size = bookSizeInt) })
             withContext(lifecycleScope.coroutineContext + Dispatchers.IO) {
                 val thumbs = flist.map {
-                    Thumbnail.fromFastFileDirect(it, bookIO.getResolver())
+                    Thumbnail.fromFastFileDirect(it, bookIO.getResolver(), bookSizeInt)
 
                 }
                 withContext(Dispatchers.Main) {
@@ -159,6 +172,18 @@ class BookListActivity : ComponentActivity() {
 
         val height = (metrics.heightPixels*0.40/metrics.density).dp
         val width = (metrics.widthPixels*0.45/metrics.density).dp
+
+        Pair(width, height)
+    }
+
+    private val bookSizeInt by lazy {
+        val metrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(metrics)
+
+        // about half of 80%〜90%.
+
+        val height = (metrics.heightPixels*0.40).toInt()
+        val width = (metrics.widthPixels*0.45).toInt()
 
         Pair(width, height)
     }
@@ -322,16 +347,29 @@ fun TwoBook(books: List<FastFile>, thumbnails: List<Thumbnail>, leftIdx: Int, bo
 fun Book(bookName: String, bookSize : Pair<Dp, Dp>, thumbnail: Thumbnail, onOpenBook : ()->Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier= Modifier
         .clickable(onClick = onOpenBook)) {
-        Canvas(modifier= Modifier
-            .size(bookSize.first, bookSize.second)
-            .padding(5.dp, 10.dp)) {
-            val blendMode = thumbnail.bg?.let { bg->
-
-                drawImage(bg.asImageBitmap(), dstSize = IntSize(size.width.toInt(), size.height.toInt()))
-                BlendMode.Multiply
-            } ?: BlendMode.SrcOver
-            drawImage(thumbnail.page.asImageBitmap(), dstSize = IntSize(size.width.toInt(), size.height.toInt()), blendMode=blendMode)
-        }
-        Text(bookName, fontSize = 20.sp)
+        ThumbnailImage(thumbnail = thumbnail, bookSize )
+        Text(bookName , fontSize = 20.sp)
     }
 }
+
+@Composable
+fun ThumbnailImage(thumbnail: Thumbnail, size: Pair<Dp, Dp>) {
+    Canvas(modifier= Modifier
+        .size(size.first, size.second)
+        .padding(5.dp, 10.dp)
+    ) {
+        val blendMode = thumbnail.bg.let { bg ->
+            drawImage(
+                bg.asImageBitmap(),
+
+            )
+            BlendMode.Multiply
+        } ?: BlendMode.SrcOver
+        drawImage(
+            thumbnail.page.asImageBitmap(),
+
+            blendMode = blendMode
+        )
+    }
+}
+

@@ -40,7 +40,7 @@ data class FastFile(val uri: Uri, val name: String, val lastModified: Long, val 
         fun listFiles(resolver: ContentResolver, parent: Uri) : Sequence<FastFile> {
             val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(parent, DocumentsContract.getDocumentId(parent))
             val cursor = resolver.query(childrenUri, null,
-                null, null, null, null) ?: return emptySequence()
+                            null, null, null, null) ?: return emptySequence()
 
             return sequence {
                 cursor.use {cur ->
