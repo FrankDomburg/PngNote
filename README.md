@@ -1,6 +1,6 @@
-![PngNote icon](https://github.com/karino2/PngNote/raw/main/images/ic_launcher.png)
 
-PngNote is a free, open-source, handwriting note-taking app based on [BOOX SDK](https://github.com/onyx-intl/OnyxAndroidDemo/blob/master/doc/Onyx-Pen-SDK.md).
+
+NewNote is an app based on [BOOX SDK](https://github.com/onyx-intl/OnyxAndroidDemo/blob/master/doc/Onyx-Pen-SDK.md).
 
 - Use BOOX SDK: Leverage raw-rendering feature, similar stylus lag to the pre-installed note app.
 - Open-source.

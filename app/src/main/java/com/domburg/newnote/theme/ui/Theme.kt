@@ -23,7 +23,7 @@ private val LightColorPalette = lightColors(
 )
 
 @Composable
-fun PngNoteTheme(content: @Composable() () -> Unit) {
+fun NewNoteTheme(content: @Composable() () -> Unit) {
     val colors = LightColorPalette
 
     MaterialTheme(

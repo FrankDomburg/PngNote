@@ -28,8 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
-import com.domburg.newnote.R
-import com.domburg.newnote.theme.PngNoteTheme
+import com.domburg.newnote.theme.NewNoteTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -222,7 +221,7 @@ class BookActivity : ComponentActivity() {
         }
 
         setContent {
-            PngNoteTheme {
+            NewNoteTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
                     Column {

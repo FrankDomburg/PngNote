@@ -1,4 +1,4 @@
-package io.github.karino2.pngnote
+package com.domburg.newnote.pngnote
 
 import org.junit.Test
 

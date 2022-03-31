@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
-import com.domburg.newnote.theme.PngNoteTheme
+import com.domburg.newnote.theme.NewNoteTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -136,7 +136,7 @@ class PageGridActivity: ComponentActivity() {
         val thumbnails = pageGrid.thumbnails
 
         setContent {
-            PngNoteTheme {
+            NewNoteTheme {
                 Column {
                     TopAppBar(title={Text(book.name)},
                         navigationIcon = {

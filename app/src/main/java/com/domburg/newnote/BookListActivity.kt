@@ -30,9 +30,10 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.*
+import com.domburg.newnote.R.mipmap.ic_launcher
 
 import com.domburg.newnote.data.preferences.PrefManager
-import com.domburg.newnote.theme.PngNoteTheme
+import com.domburg.newnote.theme.NewNoteTheme
 import com.domburg.newnote.theme.booxTextButtonColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -127,7 +128,7 @@ class BookListActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         PrefManager.init(applicationContext)
         setContent {
-            PngNoteTheme {
+            NewNoteTheme {
                 Column {
                     val showDialog = rememberSaveable { mutableStateOf(false) }
                     TopAppBar(title={Text("Book List")}, actions = {
@@ -138,7 +139,7 @@ class BookListActivity : ComponentActivity() {
                             Icon(Icons.Filled.Settings, "Settings")
                         }
                     }, navigationIcon = {
-                        Image(painterResource(id = R.mipmap.ic_launcher), null)
+                        Image(painterResource(id = ic_launcher), null)
                     })
                     if (showDialog.value) {
                         NewBookPopup(onNewBook = { addNewBook(it) }, onDismiss= { showDialog.value = false })

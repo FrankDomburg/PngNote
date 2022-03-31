@@ -1,4 +1,4 @@
-package io.github.karino2.pngnote
+package com.domburg.newnote.pngnote
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("io.github.karino2.pngnote", appContext.packageName)
+        assertEquals("com.domburg.newnote", appContext.packageName)
     }
 }
