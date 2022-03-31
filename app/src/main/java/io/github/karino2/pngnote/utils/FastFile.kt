@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.util.Log
 import java.util.*
 
 // similar to DocumentFile, but store metadata at first query.
@@ -30,6 +31,7 @@ data class FastFile(val uri: Uri, val name: String, val lastModified: Long, val 
             resolver: ContentResolver
         ): FastFile {
             val disp = getString(cur, DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+
             val lm = getLong(cur, DocumentsContract.Document.COLUMN_LAST_MODIFIED)
             val mimeType = getString(cur, DocumentsContract.Document.COLUMN_MIME_TYPE)
             val size = getLong(cur, DocumentsContract.Document.COLUMN_SIZE)

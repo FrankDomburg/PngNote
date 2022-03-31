@@ -1,15 +1,24 @@
 package io.github.karino2.pngnote
 
+
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+import android.app.Application
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.DrawFilter
+
+import android.graphics.Rect
+import android.graphics.drawable.Drawable
+
 import android.net.Uri
 import android.os.Bundle
-import android.os.StrictMode
 import android.util.AttributeSet
 import android.util.DisplayMetrics
+import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,20 +36,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.applyCanvas
+import androidx.core.graphics.createBitmap
+
 import androidx.lifecycle.*
+import dagger.hilt.android.HiltAndroidApp
 import io.github.karino2.pngnote.data.preferences.PrefManager
 import io.github.karino2.pngnote.ui.theme.PngNoteTheme
 import io.github.karino2.pngnote.ui.theme.booxTextButtonColors
@@ -54,13 +59,38 @@ import kotlinx.coroutines.withContext
 data class Thumbnail private constructor(val page: Bitmap, val bg: Bitmap, val thumbSize : Pair<Int, Int>)
 {
 
+    override
+    fun toString() : String {
+        return "page size is ${page.width} by ${page.height}, background size is ${bg.width} by ${bg.height}, thumbsize is ${thumbSize.first} by ${thumbSize.second}"
+    }
+    fun toBitmap() : Bitmap{
+//        var target = ImageBitmap(thumbSize.first, thumbSize.second, ImageBitmapConfig.Argb8888)
+//        var comboImage = Canvas(target)
+
+        val paint =android.graphics.Paint()
+            .apply { blendMode = android.graphics.BlendMode.MULTIPLY }
+
+        val result = bg.applyCanvas {
+
+            this.drawBitmap(page, null, Rect(0,0,bg.width,bg.height), null)
+
+        }
+
+        return bg
+
+    }
+
     companion object {
         /** Blank Page Foreground */
         private fun blankBitmapFg(size: Pair<Int, Int>): Bitmap = Bitmap.createBitmap(size.first, size.second, Bitmap.Config.ARGB_8888).apply { eraseColor(
             android.graphics.Color.LTGRAY) }
         /** Blank Page Background */
-        private fun blankBitmapBg(size: Pair<Int, Int>): Bitmap = Bitmap.createBitmap(size.first, size.second, Bitmap.Config.ARGB_8888).apply { eraseColor(
-            android.graphics.Color.WHITE) }
+        private fun blankBitmapBg(size: Pair<Int, Int>): Bitmap {
+            Log.i("@@","blankBitmapBg created with size: ${size.first} by ${size.second}")
+
+            return Bitmap.createBitmap(size.first, size.second, Bitmap.Config.ARGB_8888).apply { eraseColor(
+                android.graphics.Color.WHITE) }
+        }
 
         private fun loadBitmapThumbnail(file: FastFile, sampleSize: Int, resolver: ContentResolver) :Bitmap {
             return resolver.openFileDescriptor(file.uri, "r").use {
@@ -72,7 +102,9 @@ data class Thumbnail private constructor(val page: Bitmap, val bg: Bitmap, val t
         private fun loadThumbnail(
             bookDir: FastFile,
             displayName: String,
-            resolver: ContentResolver
+            resolver: ContentResolver,
+            applicationContext: Application,
+            size: Pair<Int, Int>
         ): Bitmap? {
             return bookDir.findFile(displayName)?.let { loadBitmapThumbnail(it, 3, resolver) }
         }
@@ -89,21 +121,27 @@ data class Thumbnail private constructor(val page: Bitmap, val bg: Bitmap, val t
          *
          */
 
-        fun fromFastFileDirect(source: FastFile, resolver: ContentResolver, size: Pair<Int, Int> = Pair(100,100)) : Thumbnail {
-            val page = loadThumbnail(source, "0000.png", resolver) ?: blankBitmapFg(size)
-            val bg = loadThumbnail(source, "0000-bg.png", resolver) ?: blankBitmapBg(size)
-            return Thumbnail(page, bg, size)
+        fun fromFastFileDirect(source: FastFile, resolver: ContentResolver, size: Pair<Int, Int> = Pair(200,234), applicationContext: Application) : Thumbnail {
+            Log.i("@@","fromFastFileDirect Fastfile is: ${source.uri}")
+            Log.i("@@","fromFastFileDirect Size to Create is: ${size.first} by ${size.second}")
+            val page = loadThumbnail(source, "0000.png", resolver, applicationContext, size) ?: blankBitmapFg(size)
+            val bg = loadThumbnail(source, "0000-bg.png", resolver, applicationContext, size) ?:
+            blankBitmapBg(size)
+
+            Log.i("@@","fromFastFileDirect pageSize created is: ${page.width} by ${page.height}")
+            Log.i("@@","fromFastFileDirect bgSize  created is: ${bg.width} by ${bg.height}")
+
+
+            return Thumbnail(page, page, size)
         }
 
         fun empty(size: Pair<Int, Int> = Pair(100,100)) : Thumbnail {
             return Thumbnail(blankBitmapFg(size), blankBitmapBg(size), size)
         }
-
-
     }
 }
 
-
+@HiltAndroidApp
 class BookListActivity : ComponentActivity() {
 
     private lateinit var viewModel : BookListActivityViewModel
@@ -136,9 +174,10 @@ class BookListActivity : ComponentActivity() {
             emit(flist.map { Thumbnail.empty(size = bookSizeInt) })
             withContext(lifecycleScope.coroutineContext + Dispatchers.IO) {
                 val thumbs = flist.map {
-                    Thumbnail.fromFastFileDirect(it, bookIO.getResolver(), bookSizeInt)
+                    Thumbnail.fromFastFileDirect(it, bookIO.getResolver(), Pair(486, 894), application)
 
                 }
+                thumbs.map { Log.i("@@", "Thumbs generated : ${it.toString()}") }
                 withContext(Dispatchers.Main) {
                     emit(thumbs)
                 }
@@ -153,6 +192,7 @@ class BookListActivity : ComponentActivity() {
     }
 
     private fun listFiles(url: Uri): List<FastFile> {
+
         val rootDir = FastFile.fromTreeUri(this, url)
 
         if (!rootDir.isDirectory)
@@ -205,6 +245,13 @@ class BookListActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+//        try {
+//            Class.forName("dalvik.system.CloseGuard")
+//                .getMethod("setEnabled", Boolean::class.javaPrimitiveType)
+//                .invoke(null, true)
+//        } catch (e: ReflectiveOperationException) {
+//            throw RuntimeException(e)
+//        }
         super.onCreate(savedInstanceState)
         PrefManager.init(applicationContext)
         setContent {
@@ -235,6 +282,7 @@ class BookListActivity : ComponentActivity() {
             }
         }
 
+        // Datastore action
         try {
             lastUri?.let {
                 return openRootDir(it)
@@ -242,6 +290,7 @@ class BookListActivity : ComponentActivity() {
         } catch(_: Exception) {
             toast("Can't open dir. Please re-open.")
         }
+        // UI Action
         getRootDirUrl.launch(null)
     }
 
@@ -326,14 +375,14 @@ fun TwoBook(books: List<FastFile>, thumbnails: List<Thumbnail>, leftIdx: Int, bo
     Row {
         Card(modifier= Modifier
             .weight(1f)
-            .padding(5.dp), border= BorderStroke(2.dp, Color.Black)) {
+            .padding(5.dp), border= BorderStroke(2.dp, Color(0))) {
             val book =books[leftIdx]
             Book(book.name, bookSize, thumbnails[leftIdx], onOpenBook = { gotoBook(book) })
         }
         if (leftIdx+1 < books.size) {
             Card(modifier= Modifier
                 .weight(1f)
-                .padding(5.dp), border= BorderStroke(2.dp, Color.Black)) {
+                .padding(5.dp), border= BorderStroke(2.dp, Color(0))) {
                 val book =books[leftIdx+1]
                 Book(book.name, bookSize, thumbnails[leftIdx+1], onOpenBook = { gotoBook(book) })
             }
@@ -347,7 +396,7 @@ fun TwoBook(books: List<FastFile>, thumbnails: List<Thumbnail>, leftIdx: Int, bo
 fun Book(bookName: String, bookSize : Pair<Dp, Dp>, thumbnail: Thumbnail, onOpenBook : ()->Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier= Modifier
         .clickable(onClick = onOpenBook)) {
-        ThumbnailImage(thumbnail = thumbnail, bookSize )
+        ThumbnailImage(thumbnail = thumbnail, size = bookSize )
         Text(bookName , fontSize = 20.sp)
     }
 }
