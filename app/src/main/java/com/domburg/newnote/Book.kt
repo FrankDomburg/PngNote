@@ -1,4 +1,4 @@
-package io.github.karino2.pngnote
+package com.domburg.newnote
 
 import android.content.ContentResolver
 import android.content.Context

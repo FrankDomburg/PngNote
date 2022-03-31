@@ -1,4 +1,4 @@
-package io.github.karino2.pngnote.ui.theme
+package com.domburg.newnote.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.*

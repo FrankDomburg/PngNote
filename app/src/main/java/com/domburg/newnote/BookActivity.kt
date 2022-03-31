@@ -1,4 +1,4 @@
-package io.github.karino2.pngnote
+package com.domburg.newnote
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -28,7 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
-import io.github.karino2.pngnote.ui.theme.PngNoteTheme
+import com.domburg.newnote.R
+import com.domburg.newnote.theme.PngNoteTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -123,7 +124,7 @@ class BookActivity : ComponentActivity() {
             delay(SAVE_INTERVAL_MILL)
             if (isDirty && (getCurrentMills()- lastWritten) >= SAVE_INTERVAL_MILL) {
                 isDirty = false
-                val tmpBmp = BookActivity.bitmapLock.withLock {
+                val tmpBmp = bitmapLock.withLock {
                     val bmp = pageBmp!!
                     bmp.copy(bmp.config, false)
                 }

@@ -1,4 +1,4 @@
-package io.github.karino2.pngnote.data.preferences
+package com.domburg.newnote.data.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -14,7 +14,8 @@ object PrefManager {
 
     private var uri : String?
         get() = preferences.getString("last_root_url", null)
-        set(value) {preferences.edit().putString("last_root_url", value).apply()}
+        set(value) {
+            preferences.edit().putString("last_root_url", value).apply()}
 
     fun setUri(value: Uri) { uri = value.toString() }
     fun getUri() = uri?.let { Uri.parse(it) }

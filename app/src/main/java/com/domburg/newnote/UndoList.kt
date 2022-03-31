@@ -1,9 +1,7 @@
-package io.github.karino2.pngnote
+package com.domburg.newnote
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-
-import android.graphics.RectF
 
 
 class UndoList {
