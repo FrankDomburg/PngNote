@@ -1,8 +1,8 @@
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
-    id ("kotlin-kapt")
-    id ('dagger.hilt.android.plugin')
+    id("kotlin-kapt")
+    id('dagger.hilt.android.plugin')
 }
 
 android {
@@ -10,11 +10,11 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        applicationId "io.github.karino2.pngnote"
+        applicationId "com.domburg.newnote"
         minSdkVersion 29
         targetSdkVersion 31
-        versionCode 4
-        versionName "0.4"
+        versionCode 1
+        versionName "0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

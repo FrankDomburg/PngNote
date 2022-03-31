@@ -1,11 +1,12 @@
-package io.github.karino2.pngnote
+package com.domburg.newnote
 
 import android.app.Application
 import android.graphics.Bitmap
 import android.net.Uri
-import android.util.Log
-import androidx.lifecycle.*
-import io.github.karino2.pngnote.data.preferences.PrefManager
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
+import com.domburg.newnote.preferences.PrefManager
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,11 +15,11 @@ import kotlinx.coroutines.launch
 import java.io.Serializable
 
 data class ThumbnailNewStyle(
-    val foreground : Outcome<Bitmap>,
-    val background : Outcome<Bitmap>
-){}
+    val foreground: Outcome<Bitmap>,
+    val background: Outcome<Bitmap>
+) {}
 
-data class BookListData(val uri: Uri, val thumbnail: ThumbnailNewStyle, val name: String ) {
+data class BookListData(val uri: Uri, val thumbnail: ThumbnailNewStyle, val name: String) {
 }
 
 data class BooklistState(
@@ -38,13 +39,14 @@ interface State
 class BookListActivityViewModel(
     application: Application,
     prefManager: PrefManager,
-    repository: BooksRepository
-    private val savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
+    repository: BooksRepository,
+    private val savedStateHandle: SavedStateHandle
+) : AndroidViewModel(application) {
     /** To receive Actions from the UI */
     val actionFlow = MutableSharedFlow<BookListAction>()
-    private val mutableState = MutableStateFlow(BooklistState(false, "",""))
+    private val mutableState = MutableStateFlow(BooklistState(false, "", ""))
 
-    init{
+    init {
         // Need to determine initial state
         prefManager.getUri() ?: null
         viewModelScope.launch {
@@ -62,8 +64,7 @@ class BookListActivityViewModel(
         get() = mutableState
 
     private suspend fun handleActions() {
-        actionFlow.collect {
-            action ->
+        actionFlow.collect { action ->
             when (action) {
                 is BookListAction.Greet -> {
                     // update de state

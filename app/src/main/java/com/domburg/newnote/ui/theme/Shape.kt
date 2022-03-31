@@ -1,4 +1,4 @@
-package io.github.karino2.pngnote.ui.theme
+package com.domburg.newnote
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Shapes

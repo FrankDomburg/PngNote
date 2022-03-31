@@ -20,31 +20,19 @@ Following devices are not working
 
 - Poke3
 
-I think most of Onyx devices except for the Poke series are working.
-
-Also, there is a version for non-BOOX, standard Android devices in branch. (I will put apk if someone want)
 
 # Download apk
 
-The apks of PngNote are at [https://github.com/karino2/PngNote/releases](https://github.com/karino2/PngNote/releases)
+The code for NewNote is [https://github.com/FrankDomburg/PngNote](here)
 
 # Screen shots
 
-![PngNote icon](https://github.com/karino2/PngNote/raw/main/images/BookList.png)
-![PngNote icon](https://github.com/karino2/PngNote/raw/main/images/Book.png)
-![PngNote icon](https://github.com/karino2/PngNote/raw/main/images/PageGrid.png)
-
-
 # Licensing
+
+Talk to me, we'll work it out
 
 ### Code
 
-All codes are distributed under the MIT license.
-
-Copyright: karino2
+Talk to me, we'll work it out
 
 ### Icon assets
-
-Launcher icon assets (ic_launcher.png) are distributed under the [Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International](https://creativecommons.org/licenses/by-nc-nd/4.0/)
-
-Artists, Copyright: きみどり-san (twitter: @kani_beam__)

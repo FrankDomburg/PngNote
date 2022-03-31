@@ -1,4 +1,4 @@
-package io.github.karino2.pngnote.utils
+package com.domburg.newnote.utils
 
 import android.widget.Toast
 import androidx.activity.ComponentActivity

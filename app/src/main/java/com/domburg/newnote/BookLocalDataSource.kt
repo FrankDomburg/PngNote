@@ -1,21 +1,20 @@
-package io.github.karino2.pngnote
+package com.domburg.newnote
 
 import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.core.net.toUri
-import io.github.karino2.pngnote.data.preferences.PrefManager
+import com.domburg.newnote.preferences.PrefManager
 import kotlinx.coroutines.CoroutineDispatcher
 import java.io.File
 import java.io.FileDescriptor
 import java.net.URI
 
-class BookLocalDataSource (
-    private val ioDispatcher : CoroutineDispatcher,
+class BookLocalDataSource(
+    private val ioDispatcher: CoroutineDispatcher,
     private val resolver: ContentResolver
-) : BookRepositoryStorage
-{
+) : BookRepositoryStorage {
     /**
      * This implementation assumes the existence of a Singleton PrefManager
      * which is OK, I guess, especially when moving to dependency injection,
@@ -49,9 +48,23 @@ class BookLocalDataSource (
      * if not, it basically describes a path on the file system
      *
      */
-    private fun convertUriToFileObject(uri: Uri, file: String?) : File {
-        val appendPath = if(file == null) { "" } else { "/$file" }
-        return File(URI(uri.scheme.toString(), uri.userInfo, uri.host, uri.port, appendPath, "", ""))
+    private fun convertUriToFileObject(uri: Uri, file: String?): File {
+        val appendPath = if (file == null) {
+            ""
+        } else {
+            "/$file"
+        }
+        return File(
+            URI(
+                uri.scheme.toString(),
+                uri.userInfo,
+                uri.host,
+                uri.port,
+                appendPath,
+                "",
+                ""
+            )
+        )
     }
 
     /**
@@ -67,15 +80,24 @@ class BookLocalDataSource (
      */
     private fun composeAccess(uri: Uri, page: Int, background: Boolean): File {
         val fileName =
-                if (page < 0 ) { pageNameDefaultBg } else { "" } +
-                page.toString().format(pageNamePat) +
-                if(background){pageNameBgExt} else{""} + pageNameExt
+            if (page < 0) {
+                pageNameDefaultBg
+            } else {
+                ""
+            } +
+                    page.toString().format(pageNamePat) +
+                    if (background) {
+                        pageNameBgExt
+                    } else {
+                        ""
+                    } + pageNameExt
         return convertUriToFileObject(uri, fileName)
     }
 
     private fun getBitmapFromUri(uri: Uri): Outcome<Bitmap> {
         val parcelFileDescriptor =
-            resolver.openFileDescriptor(uri, "r") ?: return Outcome.NotFound(null) // Null means file not found
+            resolver.openFileDescriptor(uri, "r")
+                ?: return Outcome.NotFound(null) // Null means file not found
 
         val fileDescriptor: FileDescriptor? = parcelFileDescriptor.fileDescriptor
         val image: Bitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor)
@@ -96,8 +118,8 @@ class BookLocalDataSource (
      *   Returns [Outcome.NotFound] when no option found so that the viewmodel can handle it
      *
      */
-    private fun getPage(uri: Uri, page: Int) : ThumbnailNewStyle {
-        var background : File? = composeAccess(uri, page, true)
+    private fun getPage(uri: Uri, page: Int): ThumbnailNewStyle {
+        var background: File? = composeAccess(uri, page, true)
         background?.let {
             if (!it.exists()) {
                 background = composeAccess(uri, 0, true)
@@ -128,7 +150,7 @@ class BookLocalDataSource (
         // doesn't need extra actions or state , it will be replaced
         // by a placeholder in the viewmodel
 
-        return ThumbnailNewStyle(foreground = fgBitmap, background = bgBitmap )
+        return ThumbnailNewStyle(foreground = fgBitmap, background = bgBitmap)
     }
 
     /**
@@ -144,7 +166,7 @@ class BookLocalDataSource (
 
         directory?.let {
             File(directory).walk().forEach {
-                 if (it.isDirectory) {
+                if (it.isDirectory) {
                     result.add(
                         BooksAsStored(
                             uri = it.toUri(),
@@ -152,7 +174,7 @@ class BookLocalDataSource (
                             name = it.name
                         )
                     )
-                 }
+                }
             }
         }
         return result

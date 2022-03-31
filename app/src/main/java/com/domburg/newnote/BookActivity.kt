@@ -1,11 +1,10 @@
-package io.github.karino2.pngnote
+package com.domburg.newnote
 
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -16,10 +15,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,21 +27,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
-import io.github.karino2.pngnote.ui.theme.PngNoteTheme
-import io.github.karino2.pngnote.utils.toast
+import com.domburg.newnote.utils.FastFile
+import com.domburg.newnote.utils.toast
+import io.github.karino2.pngnote.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 import kotlin.concurrent.withLock
-import io.github.karino2.pngnote.utils.FastFile
 
 class BookActivity : ComponentActivity() {
     companion object {
         val bitmapLock = java.util.concurrent.locks.ReentrantLock()
     }
-    private lateinit var dirUrl : Uri
+
+    private lateinit var dirUrl: Uri
     private var initialPageIdx = 0
 
     private val bookDir by lazy {
@@ -51,22 +51,20 @@ class BookActivity : ComponentActivity() {
 
     private val bookIO by lazy { BookIO(contentResolver) }
 
-    private var _book : Book? = null
-    set(newbook) {
-        field = newbook
-        pageNum.value = newbook?.pages?.size ?: 0
-    }
-
-    private val book : Book
-    get() {
-        _book?.let { return it }
-        bookIO.loadBook(bookDir).also {
-            _book = it
-            return it
+    private var _book: Book? = null
+        set(newbook) {
+            field = newbook
+            pageNum.value = newbook?.pages?.size ?: 0
         }
-    }
 
-
+    private val book: Book
+        get() {
+            _book?.let { return it }
+            bookIO.loadBook(bookDir).also {
+                _book = it
+                return it
+            }
+        }
 
 
     private val initCount = MutableLiveData(0)
@@ -83,7 +81,7 @@ class BookActivity : ComponentActivity() {
 
     private var pageBmp: Bitmap? = null
     private var isDirty = false
-    private fun notifyBitmapUpdate(newBmp : Bitmap) {
+    private fun notifyBitmapUpdate(newBmp: Bitmap) {
         isDirty = true
         lastWritten = getCurrentMills()
 
@@ -99,7 +97,7 @@ class BookActivity : ComponentActivity() {
         canUndo = canUndo1
         canRedo.value = canRedo1
 
-        if(needRefresh) {
+        if (needRefresh) {
             refreshCount.value = refreshCount.value!! + 1
         }
     }
@@ -123,9 +121,9 @@ class BookActivity : ComponentActivity() {
     private fun lazySave() {
         lifecycleScope.launch(Dispatchers.IO) {
             delay(SAVE_INTERVAL_MILL)
-            if (isDirty && (getCurrentMills()- lastWritten) >= SAVE_INTERVAL_MILL) {
+            if (isDirty && (getCurrentMills() - lastWritten) >= SAVE_INTERVAL_MILL) {
                 isDirty = false
-                val tmpBmp = BookActivity.bitmapLock.withLock {
+                val tmpBmp = bitmapLock.withLock {
                     val bmp = pageBmp!!
                     bmp.copy(bmp.config, false)
                 }
@@ -144,7 +142,7 @@ class BookActivity : ComponentActivity() {
 
     override fun onRestart() {
         super.onRestart()
-        restartCount.value = restartCount.value!!+1
+        restartCount.value = restartCount.value!! + 1
     }
 
     override fun onStop() {
@@ -153,14 +151,14 @@ class BookActivity : ComponentActivity() {
     }
 
 
-
     private fun addNewPageAndGo() {
         ensureSave()
         if (emptyBmp == null) {
             pageBmp?.let { pbmp ->
-                emptyBmp = Bitmap.createBitmap(pbmp.width, pbmp.height, Bitmap.Config.ARGB_8888).apply {
-                    eraseColor(Color.WHITE)
-                }
+                emptyBmp =
+                    Bitmap.createBitmap(pbmp.width, pbmp.height, Bitmap.Config.ARGB_8888).apply {
+                        eraseColor(Color.WHITE)
+                    }
 
             }
         }
@@ -168,10 +166,10 @@ class BookActivity : ComponentActivity() {
         _book = book.addPage()
 
 
-        emptyBmp?.let {ebmp ->
+        emptyBmp?.let { ebmp ->
             savePageInMain(pageNum.value!! - 1, ebmp)
         }
-        pageIdx.value = pageNum.value!!-1
+        pageIdx.value = pageNum.value!! - 1
     }
 
     private fun gotoFirstPage() {
@@ -181,21 +179,21 @@ class BookActivity : ComponentActivity() {
 
     private fun gotoLastPage() {
         ensureSave()
-        pageIdx.value = pageNum.value!!-1
+        pageIdx.value = pageNum.value!! - 1
     }
 
     private fun gotoPrevPage() {
         ensureSave()
         pageIdx.value?.let {
             if (it >= 1)
-                pageIdx.value = it-1
+                pageIdx.value = it - 1
         }
     }
 
     private fun gotoNextPage() {
         ensureSave()
         pageIdx.value?.let {
-            pageIdx.value = it+1
+            pageIdx.value = it + 1
         }
     }
 
@@ -236,13 +234,18 @@ class BookActivity : ComponentActivity() {
                         val redoCountState = redoCount.observeAsState(0)
                         val refreshCountState = refreshCount.observeAsState(0)
 
-                        TopAppBar(title={
-                            Row(modifier=Modifier.weight(5f), verticalAlignment = Alignment.CenterVertically) {
+                        TopAppBar(title = {
+                            Row(
+                                modifier = Modifier.weight(5f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 IconToggleButton(checked = !isEraser, onCheckedChange = {
                                     isEraser = false
-                                } ) {
-                                    val icon = if (isEraser) Icons.Outlined.Edit else Icons.Filled.Edit
-                                    val alpha = if (isEraser) LocalContentAlpha.current*0.7f else LocalContentAlpha.current
+                                }) {
+                                    val icon =
+                                        if (isEraser) Icons.Outlined.Edit else Icons.Filled.Edit
+                                    val alpha =
+                                        if (isEraser) LocalContentAlpha.current * 0.7f else LocalContentAlpha.current
                                     Icon(
                                         icon,
                                         contentDescription = "Pen",
@@ -250,81 +253,141 @@ class BookActivity : ComponentActivity() {
                                     )
                                 }
 
-                                Spacer(modifier=Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
                                 IconToggleButton(
-                                    modifier=Modifier.size(26.dp),
+                                    modifier = Modifier.size(26.dp),
                                     checked = isEraser, onCheckedChange = {
-                                    isEraser = true
-                                } ) {
-                                    Image(painter = painterResource(if(isEraser) R.mipmap.eraser_button_selected else R.mipmap.eraser_button),
-                                        contentDescription = "Eraser")
+                                        isEraser = true
+                                    }) {
+                                    Image(
+                                        painter = painterResource(if (isEraser) R.mipmap.eraser_button_selected else R.mipmap.eraser_button),
+                                        contentDescription = "Eraser"
+                                    )
                                 }
-                                Spacer(modifier=Modifier.width(20.dp))
+                                Spacer(modifier = Modifier.width(20.dp))
 
-                                IconButton(onClick={
-                                    if(canUndo) {
-                                        undoCount.value = undoCount.value!!+1
+                                IconButton(onClick = {
+                                    if (canUndo) {
+                                        undoCount.value = undoCount.value!! + 1
                                     } else {
                                         toast("Not yet undo-able.")
                                     }
-                                   }, enabled=true) {
-                                    Icon(painter = painterResource(id = R.drawable.outline_undo), contentDescription = "Undo")
+                                }, enabled = true) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.outline_undo),
+                                        contentDescription = "Undo"
+                                    )
                                 }
-                                IconButton(onClick={ redoCount.value = redoCount.value!!+1  }, enabled=canRedoState.value) {
-                                    Icon(painter = painterResource(id = R.drawable.outline_redo), contentDescription = "Redo")
+                                IconButton(onClick = {
+                                    redoCount.value = redoCount.value!! + 1
+                                }, enabled = canRedoState.value) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.outline_redo),
+                                        contentDescription = "Redo"
+                                    )
                                 }
                             }
-                            Row(modifier=Modifier.weight(5f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
-                                IconButton(onClick= { gotoGridPage() }) {
-                                    Icon(painter = painterResource(id = R.drawable.baseline_grid_view), contentDescription="Grid")
+                            Row(
+                                modifier = Modifier.weight(5f),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                IconButton(onClick = { gotoGridPage() }) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_grid_view),
+                                        contentDescription = "Grid"
+                                    )
                                 }
-                                IconButton(modifier=Modifier.size(24.dp), onClick={ gotoFirstPage() }, enabled=idxState.value != 0) {
-                                    Icon(painter = painterResource(id = R.drawable.outline_first_page), contentDescription = "First Page")
+                                IconButton(
+                                    modifier = Modifier.size(24.dp),
+                                    onClick = { gotoFirstPage() },
+                                    enabled = idxState.value != 0
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.outline_first_page),
+                                        contentDescription = "First Page"
+                                    )
                                 }
-                                IconButton(modifier=Modifier.size(24.dp), onClick={ gotoPrevPage() }, enabled=idxState.value != 0) {
-                                    Icon(painter = painterResource(id = R.drawable.baseline_chevron_left), contentDescription = "Prev Page")
+                                IconButton(
+                                    modifier = Modifier.size(24.dp),
+                                    onClick = { gotoPrevPage() },
+                                    enabled = idxState.value != 0
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_chevron_left),
+                                        contentDescription = "Prev Page"
+                                    )
                                 }
-                                val pidx = idxState.value+1
+                                val pidx = idxState.value + 1
                                 val pnum = pageNumState.value
                                 Text("$pidx/$pnum")
 
-                                val lastPage = idxState.value+1 == pageNumState.value
-                                IconButton(modifier=Modifier.size(24.dp), onClick={ gotoNextPage() }, enabled=!lastPage) {
-                                    Icon(painter = painterResource(id = R.drawable.baseline_chevron_right), contentDescription = "Next Page")
+                                val lastPage = idxState.value + 1 == pageNumState.value
+                                IconButton(
+                                    modifier = Modifier.size(24.dp),
+                                    onClick = { gotoNextPage() },
+                                    enabled = !lastPage
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.baseline_chevron_right),
+                                        contentDescription = "Next Page"
+                                    )
                                 }
-                                IconButton(modifier=Modifier.size(24.dp), onClick={ gotoLastPage() }, enabled=!lastPage) {
-                                    Icon(painter = painterResource(id = R.drawable.outline_last_page), contentDescription = "Last Page")
+                                IconButton(
+                                    modifier = Modifier.size(24.dp),
+                                    onClick = { gotoLastPage() },
+                                    enabled = !lastPage
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.outline_last_page),
+                                        contentDescription = "Last Page"
+                                    )
                                 }
 
-                                IconButton(onClick={ addNewPageAndGo() }, enabled = lastPage) {
-                                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add Page")
+                                IconButton(
+                                    onClick = { addNewPageAndGo() },
+                                    enabled = lastPage
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Add Page"
+                                    )
                                 }
                             }
                         },
-                        navigationIcon = {
-                            IconButton(onClick = {
-                                ensureSave()
-                                finish()
-                            }) {
-                                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
-                            }
-                        })
+                            navigationIcon = {
+                                IconButton(onClick = {
+                                    ensureSave()
+                                    finish()
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowBack,
+                                        contentDescription = "Back"
+                                    )
+                                }
+                            })
                         BoxWithConstraints {
                             val initState = initCount.observeAsState(0)
                             AndroidView(modifier = Modifier.size(maxWidth, maxHeight),
-                                factory = {context->
-                                    val initBmp = bookIO.loadBitmapOrNull(book.getPage(pageIdx.value!!))
+                                factory = { context ->
+                                    val initBmp =
+                                        bookIO.loadBitmapOrNull(book.getPage(pageIdx.value!!))
                                     val bgBmp = bookIO.loadBgOrNull(book)
                                     CanvasBoox(context, initBmp, bgBmp, initialPageIdx).apply {
                                         firstInit()
                                         setOnUpdateListener { notifyBitmapUpdate(it) }
-                                        setOnUndoStateListener { undo, redo-> notifyUndoStateChanged(undo, redo) }
+                                        setOnUndoStateListener { undo, redo ->
+                                            notifyUndoStateChanged(
+                                                undo,
+                                                redo
+                                            )
+                                        }
                                     }
                                 },
                                 update = {
                                     it.ensureInit(initState.value)
                                     it.penOrEraser(!isEraser)
-                                    it.onPageIdx(idxState.value, bitmapLoader= {idx->
+                                    it.onPageIdx(idxState.value, bitmapLoader = { idx ->
                                         bookIO.loadBitmapOrNull(book.getPage(idx)).also {
                                             isDirty = false
                                             pageBmp = it

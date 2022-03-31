@@ -6,11 +6,11 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:supportsRtl="true"
         android:requestLegacyExternalStorage="true"
+        android:supportsRtl="true"
         android:theme="@style/Theme.PngNote">
         <activity
-            android:name=".BookListActivity"
+            android:name="com.domburg.newnote.BookListActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.PngNote.NoActionBar">
@@ -21,11 +21,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".BookActivity"
+            android:name="com.domburg.newnote.BookActivity"
             android:label="@string/app_name"
-            android:theme="@style/Theme.PngNote.NoActionBar">
-        </activity>
-        <activity android:name=".PageGridActivity" android:label="@string/app_name" android:theme="@style/Theme.PngNote.NoActionBar" />
+            android:theme="@style/Theme.PngNote.NoActionBar"></activity>
+        <activity
+            android:name="com.domburg.newnote.PageGridActivity"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.PngNote.NoActionBar" />
     </application>
 
 </manifest>

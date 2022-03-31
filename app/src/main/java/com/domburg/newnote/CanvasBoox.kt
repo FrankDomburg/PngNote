@@ -1,4 +1,4 @@
-package io.github.karino2.pngnote
+package com.domburg.newnote
 
 import android.content.Context
 import android.graphics.*
@@ -15,7 +15,12 @@ import kotlin.concurrent.withLock
 import kotlin.math.abs
 
 
-class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val background: Bitmap?, initialPageIdx:Int  = 0) : SurfaceView(context) {
+class CanvasBoox(
+    context: Context,
+    var initialBmp: Bitmap? = null,
+    private val background: Bitmap?,
+    initialPageIdx: Int = 0
+) : SurfaceView(context) {
     var bitmap: Bitmap? = null
     private var bmpCanvas: Canvas? = null
 
@@ -23,7 +28,8 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     private val eraserWidth = 30f
 
     private val bmpPaint = Paint(Paint.DITHER_FLAG)
-    private val bmpPaintWithBG = Paint(Paint.DITHER_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.MULTIPLY) }
+    private val bmpPaintWithBG =
+        Paint(Paint.DITHER_FLAG).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.MULTIPLY) }
     private val pathPaint = Paint().apply {
         isAntiAlias = true
         // isDither = true
@@ -48,7 +54,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     private var undoCount = 0
     private var redoCount = 0
 
-    fun undo(count : Int) {
+    fun undo(count: Int) {
         if (undoCount != count) {
             undoCount = count
             BookActivity.bitmapLock.withLock {
@@ -60,7 +66,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     }
 
     fun redo(count: Int) {
-        if(redoCount != count) {
+        if (redoCount != count) {
             redoCount = count
             BookActivity.bitmapLock.withLock {
                 undoList.redo(bmpCanvas!!)
@@ -87,10 +93,9 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
         get() = undoList.canRedo
 
 
-
     private var initCount = 0
 
-    private val inputCallback : RawInputCallback = object: RawInputCallback() {
+    private val inputCallback: RawInputCallback = object : RawInputCallback() {
         override fun onBeginRawDrawing(p0: Boolean, p1: TouchPoint?) {
         }
 
@@ -115,7 +120,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
 
         // refresh every 300msec or 100 points.
         val needUpdate: Boolean
-            get() = eraseAccPoints.size >=100 || (getCurrentMills()-lastSave) > 300L
+            get() = eraseAccPoints.size >= 100 || (getCurrentMills() - lastSave) > 300L
 
         override fun onBeginRawErasing(p0: Boolean, p1: TouchPoint?) {
             // Log.d("PngNote", "erase begin")
@@ -136,7 +141,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
 
         override fun onRawErasingTouchPointMoveReceived(p0: TouchPoint?) {
             eraseAccPoints.add(p0!!)
-            if(needUpdate) {
+            if (needUpdate) {
                 // Log.d("PngNote", "erase update")
                 eraseByPointsAndUpdate()
             }
@@ -157,7 +162,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     }
 
     private val touchHelper by lazy { TouchHelper.create(this, inputCallback) }
-    private val layoutChangedListener : OnLayoutChangeListener by lazy {
+    private val layoutChangedListener: OnLayoutChangeListener by lazy {
         OnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             /**
              * Called when the layout bounds of a view changes due to layout processing.
@@ -172,7 +177,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
              * @param oldRight The previous value of the view's right property.
              * @param oldBottom The previous value of the view's bottom property.
              */
-            if(cleanSurfaceView()) {
+            if (cleanSurfaceView()) {
                 removeOnLayoutChangeListener(layoutChangedListener)
             }
 
@@ -194,61 +199,68 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     // Initial creation is special, regards initial state as attached.
     private var detached = false
 
-    private val surfaceCallback : SurfaceHolder.Callback by lazy { object : SurfaceHolder.Callback {
-        /**
-         * This is called immediately after the surface is first created.
-         * Implementations of this should start up whatever rendering code
-         * they desire.  Note that only one thread can ever draw into
-         * a [Surface], so you should not draw into the Surface here
-         * if your normal rendering will be in another thread.
-         *
-         * @param holder The SurfaceHolder whose surface is being created.
-         */
-        override fun surfaceCreated(holder: SurfaceHolder) {
-            bitmap?.let {bmp ->
-                holder.lockCanvas()?.let { lockCanvas->
-                    lockCanvas.drawColor(Color.WHITE)
-                    val paint = background?.let { bg->
-                        lockCanvas.drawBitmap(bg, 0f, 0f, bmpPaint)
-                        bmpPaintWithBG
-                    } ?: bmpPaint
-                    lockCanvas.drawBitmap(bmp, 0f, 0f, paint)
-                    holder.unlockCanvasAndPost(lockCanvas)
-                }
-                true
-            } ?: cleanSurfaceView()
-        }
+    private val surfaceCallback: SurfaceHolder.Callback by lazy {
+        object : SurfaceHolder.Callback {
+            /**
+             * This is called immediately after the surface is first created.
+             * Implementations of this should start up whatever rendering code
+             * they desire.  Note that only one thread can ever draw into
+             * a [Surface], so you should not draw into the Surface here
+             * if your normal rendering will be in another thread.
+             *
+             * @param holder The SurfaceHolder whose surface is being created.
+             */
+            override fun surfaceCreated(holder: SurfaceHolder) {
+                bitmap?.let { bmp ->
+                    holder.lockCanvas()?.let { lockCanvas ->
+                        lockCanvas.drawColor(Color.WHITE)
+                        val paint = background?.let { bg ->
+                            lockCanvas.drawBitmap(bg, 0f, 0f, bmpPaint)
+                            bmpPaintWithBG
+                        } ?: bmpPaint
+                        lockCanvas.drawBitmap(bmp, 0f, 0f, paint)
+                        holder.unlockCanvasAndPost(lockCanvas)
+                    }
+                    true
+                } ?: cleanSurfaceView()
+            }
 
-        /**
-         * This is called immediately after any structural changes (format or
-         * size) have been made to the surface.  You should at this point update
-         * the imagery in the surface.  This method is always called at least
-         * once, after [.surfaceCreated].
-         *
-         * @param holder The SurfaceHolder whose surface has changed.
-         * @param format The new [PixelFormat] of the surface.
-         * @param width The new width of the surface.
-         * @param height The new height of the surface.
-         */
-        override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        }
+            /**
+             * This is called immediately after any structural changes (format or
+             * size) have been made to the surface.  You should at this point update
+             * the imagery in the surface.  This method is always called at least
+             * once, after [.surfaceCreated].
+             *
+             * @param holder The SurfaceHolder whose surface has changed.
+             * @param format The new [PixelFormat] of the surface.
+             * @param width The new width of the surface.
+             * @param height The new height of the surface.
+             */
+            override fun surfaceChanged(
+                holder: SurfaceHolder,
+                format: Int,
+                width: Int,
+                height: Int
+            ) {
+            }
 
-        /**
-         * This is called immediately before a surface is being destroyed. After
-         * returning from this call, you should no longer try to access this
-         * surface.  If you have a rendering thread that directly accesses
-         * the surface, you must ensure that thread is no longer touching the
-         * Surface before returning from this function.
-         *
-         * @param holder The SurfaceHolder whose surface is being destroyed.
-         */
-        override fun surfaceDestroyed(holder: SurfaceHolder) {
-            holder.removeCallback(surfaceCallback)
-            touchHelper.closeRawDrawing()
-            detached = true
-        }
+            /**
+             * This is called immediately before a surface is being destroyed. After
+             * returning from this call, you should no longer try to access this
+             * surface.  If you have a rendering thread that directly accesses
+             * the surface, you must ensure that thread is no longer touching the
+             * Surface before returning from this function.
+             *
+             * @param holder The SurfaceHolder whose surface is being destroyed.
+             */
+            override fun surfaceDestroyed(holder: SurfaceHolder) {
+                holder.removeCallback(surfaceCallback)
+                touchHelper.closeRawDrawing()
+                detached = true
+            }
 
-    } }
+        }
+    }
 
     fun firstInit() {
         touchHelper
@@ -257,7 +269,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     }
 
     fun ensureInit(callCount: Int) {
-        if(callCount == 1 && initCount != 1) {
+        if (callCount == 1 && initCount != 1) {
             initCount = 1
             startRawRendering()
             detached = false
@@ -278,8 +290,8 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
         }
     }
 
-    private fun ensureBitmap() :Pair<Bitmap, Canvas> {
-        if(bitmap == null) {
+    private fun ensureBitmap(): Pair<Bitmap, Canvas> {
+        if (bitmap == null) {
             bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply {
                 eraseColor(Color.WHITE)
             }
@@ -291,7 +303,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     // use for short term temporary only.
     private val tempRegion = RectF()
     private val tempRect = Rect()
-    fun pathBound(path: Path) : Rect {
+    fun pathBound(path: Path): Rect {
         path.computeBounds(tempRegion, false)
         tempRegion.roundOut(tempRect)
         widen(tempRect, 5)
@@ -307,7 +319,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     }
 
     private fun drawPointsToBitmap(points: List<TouchPoint>) {
-        val paint = if(isPencil) pathPaint else eraserPaint
+        val paint = if (isPencil) pathPaint else eraserPaint
         drawOrErasePointsToBitmap(points, paint)
     }
 
@@ -358,7 +370,8 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     private fun drawBitmapToSurface() {
         val canvas: Canvas = holder.lockCanvas() ?: return
         val (targetBmp, _) = ensureBitmap()
-        canvas.drawBitmap(targetBmp,
+        canvas.drawBitmap(
+            targetBmp,
             Rect(0, 0, targetBmp.width, targetBmp.height),
             Rect(0, 0, width, height),
             bmpPaint
@@ -372,9 +385,8 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     }
 
 
-
     private var isPencil = true
-    private val isEraser : Boolean
+    private val isEraser: Boolean
         get() = !isPencil
 
 
@@ -406,7 +418,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
 
     private var refreshCount = 0
     fun refreshUI(count: Int) {
-        if(refreshCount != count) {
+        if (refreshCount != count) {
             refreshUI()
             refreshCount = count
         }
@@ -424,7 +436,7 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
         val (bmp, _) = ensureBitmap()
         holder.lockCanvas()?.let { lockCanvas ->
             lockCanvas.drawColor(Color.WHITE)
-            val paint = background?.let { bg->
+            val paint = background?.let { bg ->
                 lockCanvas.drawBitmap(bg, 0f, 0f, bmpPaint)
                 bmpPaintWithBG
             } ?: bmpPaint
@@ -433,8 +445,8 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
         }
     }
 
-    fun penOrEraser(isPen: Boolean ) {
-        if(isPen == isPencil)
+    fun penOrEraser(isPen: Boolean) {
+        if (isPen == isPencil)
             return
         if (isPen) {
             pencil()
@@ -444,8 +456,8 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
     }
 
     private var pageIdx = initialPageIdx
-    fun onPageIdx(idx: Int, bitmapLoader: (Int)->Bitmap?) {
-        if(pageIdx == idx)
+    fun onPageIdx(idx: Int, bitmapLoader: (Int) -> Bitmap?) {
+        if (pageIdx == idx)
             return
 
         pageIdx = idx
@@ -454,10 +466,12 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
         val (offscreenBmp, canvas) = ensureBitmap()
         offscreenBmp.eraseColor(Color.WHITE)
         newbmp?.let {
-            canvas.drawBitmap(it,
+            canvas.drawBitmap(
+                it,
                 Rect(0, 0, it.width, it.height),
                 Rect(0, 0, width, height),
-                bmpPaint)
+                bmpPaint
+            )
         }
         undoList.clear()
         notifyUndoStateChanged()
@@ -475,18 +489,21 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
         val (targetBmp, bmpCanvas) = ensureBitmap()
         canvas.drawColor(Color.WHITE)
         initialBmp?.let {
-            val paint = background?.let { bg->
-                canvas.drawBitmap(bg,
+            val paint = background?.let { bg ->
+                canvas.drawBitmap(
+                    bg,
                     Rect(0, 0, bg.width, bg.height),
                     Rect(0, 0, width, height),
                     bmpPaint
                 )
                 bmpPaintWithBG
             } ?: bmpPaint
-            canvas.drawBitmap(it,
+            canvas.drawBitmap(
+                it,
                 Rect(0, 0, it.width, it.height),
                 Rect(0, 0, width, height),
-                paint)
+                paint
+            )
             BookActivity.bitmapLock.withLock {
                 bmpCanvas.drawBitmap(
                     it,
@@ -508,8 +525,8 @@ class CanvasBoox(context: Context, var initialBmp: Bitmap? = null, private val b
         this.updateBmpListener = updateBmpListener
     }
 
-    private var undoStateListener: (undo:Boolean, redo:Boolean) -> Unit = { _, _ ->}
-    fun setOnUndoStateListener(undoStateListener: (undo:Boolean, redo:Boolean) -> Unit) {
+    private var undoStateListener: (undo: Boolean, redo: Boolean) -> Unit = { _, _ -> }
+    fun setOnUndoStateListener(undoStateListener: (undo: Boolean, redo: Boolean) -> Unit) {
         this.undoStateListener = undoStateListener
     }
 

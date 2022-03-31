@@ -1,24 +1,30 @@
-package io.github.karino2.pngnote.utils
+package com.domburg.newnote.utils
 
 import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.DocumentsContract
-import android.util.Log
 import java.util.*
 
 // similar to DocumentFile, but store metadata at first query.
-data class FastFile(val uri: Uri, val name: String, val lastModified: Long, val mimeType: String, val size: Long, val resolver: ContentResolver) {
+data class FastFile(
+    val uri: Uri,
+    val name: String,
+    val lastModified: Long,
+    val mimeType: String,
+    val size: Long,
+    val resolver: ContentResolver
+) {
     companion object {
-        private fun getLong(cur: Cursor, columnName: String) : Long {
+        private fun getLong(cur: Cursor, columnName: String): Long {
             val index = cur.getColumnIndex(columnName)
             if (cur.isNull(index))
                 return 0L
             return cur.getLong(index)
         }
 
-        private fun getString(cur: Cursor, columnName: String) : String {
+        private fun getString(cur: Cursor, columnName: String): String {
             val index = cur.getColumnIndex(columnName)
             if (cur.isNull(index))
                 return ""
@@ -39,14 +45,19 @@ data class FastFile(val uri: Uri, val name: String, val lastModified: Long, val 
             return file
         }
 
-        fun listFiles(resolver: ContentResolver, parent: Uri) : Sequence<FastFile> {
-            val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(parent, DocumentsContract.getDocumentId(parent))
-            val cursor = resolver.query(childrenUri, null,
-                            null, null, null, null) ?: return emptySequence()
+        fun listFiles(resolver: ContentResolver, parent: Uri): Sequence<FastFile> {
+            val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+                parent,
+                DocumentsContract.getDocumentId(parent)
+            )
+            val cursor = resolver.query(
+                childrenUri, null,
+                null, null, null, null
+            ) ?: return emptySequence()
 
             return sequence {
-                cursor.use {cur ->
-                    while(cur.moveToNext()) {
+                cursor.use { cur ->
+                    while (cur.moveToNext()) {
                         val docId = cur.getString(0)
                         val uri = DocumentsContract.buildDocumentUriUsingTree(parent, docId)
 
@@ -80,18 +91,26 @@ data class FastFile(val uri: Uri, val name: String, val lastModified: Long, val 
          */
         // Similar to DocumentFile:fromTreeUri.
         // treeUri is Intent#getData() of ACTION_OPEN_DOCUMENT_TREE
-        fun fromTreeUri(context: Context, treeUri: Uri) : FastFile {
-            val docId = (if(DocumentsContract.isDocumentUri(context, treeUri)) DocumentsContract.getDocumentId(treeUri) else DocumentsContract.getTreeDocumentId(treeUri))
+        fun fromTreeUri(context: Context, treeUri: Uri): FastFile {
+            val docId = (if (DocumentsContract.isDocumentUri(
+                    context,
+                    treeUri
+                )
+            ) DocumentsContract.getDocumentId(treeUri) else DocumentsContract.getTreeDocumentId(
+                treeUri
+            ))
                 ?: throw IllegalArgumentException("Could not get documentUri from $treeUri")
-            val treeDocUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId) ?: throw NullPointerException("Failed to build documentUri from $treeUri")
+            val treeDocUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, docId)
+                ?: throw NullPointerException("Failed to build documentUri from $treeUri")
             val resolver = context.contentResolver
-            return fromDocUri(resolver, treeDocUri) ?: throw IllegalArgumentException("Could not query from $treeUri")
+            return fromDocUri(resolver, treeDocUri)
+                ?: throw IllegalArgumentException("Could not query from $treeUri")
         }
 
         fun fromDocUri(
             resolver: ContentResolver,
             treeDocUri: Uri
-        ) : FastFile? {
+        ): FastFile? {
             val cursor = resolver.query(
                 treeDocUri, null,
                 null, null, null, null
@@ -105,7 +124,8 @@ data class FastFile(val uri: Uri, val name: String, val lastModified: Long, val 
         }
 
     }
-    val isDirectory : Boolean
+
+    val isDirectory: Boolean
         get() = DocumentsContract.Document.MIME_TYPE_DIR == mimeType
 
     val isFile: Boolean
@@ -115,24 +135,29 @@ data class FastFile(val uri: Uri, val name: String, val lastModified: Long, val 
     //  funcs below are for directory only
     //
 
-    fun createFile(fileMimeType: String, fileDisplayName: String) : FastFile? {
-        return DocumentsContract.createDocument(resolver, uri, fileMimeType, fileDisplayName) ?.let {
+    fun createFile(fileMimeType: String, fileDisplayName: String): FastFile? {
+        return DocumentsContract.createDocument(resolver, uri, fileMimeType, fileDisplayName)?.let {
             //  this last modified might be slight different to real file lastModified, but I think it's not big deal.
             FastFile(it, fileDisplayName, (Date()).time, fileMimeType, 0, resolver)
         }
     }
 
-    fun listFiles() =  listFiles(resolver, uri)
+    fun listFiles() = listFiles(resolver, uri)
 
     fun findFile(targetDisplayName: String) = listFiles().find { it.name == targetDisplayName }
 
     fun createDirectory(displayName: String): FastFile? {
-        val resUri = DocumentsContract.createDocument(resolver, uri, DocumentsContract.Document.MIME_TYPE_DIR, displayName) ?: return null
+        val resUri = DocumentsContract.createDocument(
+            resolver,
+            uri,
+            DocumentsContract.Document.MIME_TYPE_DIR,
+            displayName
+        ) ?: return null
         return fromDocUri(resolver, resUri)
     }
 
-    val isEmpty : Boolean
-        get(){
+    val isEmpty: Boolean
+        get() {
             if (!isFile)
                 return false
             return 0L == size

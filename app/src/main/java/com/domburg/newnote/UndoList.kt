@@ -1,14 +1,12 @@
-package io.github.karino2.pngnote
+package com.domburg.newnote
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
 
-import android.graphics.RectF
-
 
 class UndoList {
     companion object {
-        private const val COMMAND_MAX_SIZE = 1024*1024 // 1MB
+        private const val COMMAND_MAX_SIZE = 1024 * 1024 // 1MB
     }
 
     internal class UndoCommand(
@@ -41,7 +39,8 @@ class UndoList {
         x: Int,
         y: Int,
         undo: Bitmap,
-        redo: Bitmap) {
+        redo: Bitmap
+    ) {
         discardLaterCommand()
         commandList.add(UndoCommand(x, y, undo, redo))
         currentPos++
@@ -63,7 +62,7 @@ class UndoList {
     }
 
     private val commandsSize: Int
-        get(){
+        get() {
             var res = 0
             for (cmd in commandList) {
                 res += cmd.size
@@ -71,7 +70,7 @@ class UndoList {
             return res
         }
 
-    val canUndo : Boolean
+    val canUndo: Boolean
         get() = currentPos >= 0
 
     val canRedo: Boolean

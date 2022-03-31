@@ -1,8 +1,9 @@
-package io.github.karino2.pngnote.ui.theme
+package com.domburg.newnote
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.*
+import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults.textButtonColors
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
@@ -35,7 +36,8 @@ fun PngNoteTheme(content: @Composable() () -> Unit) {
 }
 
 @Composable
-fun booxTextButtonColors(): ButtonColors = textButtonColors(backgroundColor = Color.White,
+fun booxTextButtonColors(): ButtonColors = textButtonColors(
+    backgroundColor = Color.White,
     contentColor = Color.Black,
     disabledContentColor = Color.LightGray
 )
