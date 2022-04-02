@@ -1,13 +1,17 @@
 package com.domburg.newnote
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.util.AttributeSet
 import android.util.DisplayMetrics
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -35,13 +39,24 @@ import com.domburg.newnote.R.mipmap.ic_launcher
 import com.domburg.newnote.data.preferences.PrefManager
 import com.domburg.newnote.theme.NewNoteTheme
 import com.domburg.newnote.theme.booxTextButtonColors
+import com.domburg.newnote.utils.FastFile
+import com.domburg.newnote.utils.toast
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 data class Thumbnail(val page: Bitmap, val bg: Bitmap?)
 
+@AndroidEntryPoint
+class BookListActivity (): ComponentActivity()
+{
 
-class BookListActivity : ComponentActivity() {
+    @Inject
+    lateinit var prefManager: PrefManager
+
+    private val viewModel: BookListActivityViewModel by viewModels()
+
     private var _url : Uri? = null
 
     private val getRootDirUrl = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
@@ -55,11 +70,11 @@ class BookListActivity : ComponentActivity() {
     }
 
     private val lastUri: Uri?
-        get() = PrefManager.getUri()
+        get() = prefManager.getUri()
 
-    private fun writeLastUri(uri: Uri) = PrefManager.setUri(uri)
+    private fun writeLastUri(uri: Uri) = prefManager.setUri(uri)
 
-    private fun showMessage(msg: String) = BookList.showMessage(this, msg)
+
 
     private fun openRootDir(url: Uri) {
         _url = url
@@ -113,6 +128,18 @@ class BookListActivity : ComponentActivity() {
         Pair(width, height)
     }
 
+    private val bookSizeInt by lazy {
+        val metrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(metrics)
+
+        // about half of 80%〜90%.
+
+        val height = (metrics.heightPixels*0.40).toInt()
+        val width = (metrics.widthPixels*0.45).toInt()
+
+        Pair(width, height)
+    }
+
     private val bookIO by lazy { BookIO(contentResolver) }
 
     override fun onRestart() {
@@ -125,8 +152,14 @@ class BookListActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+//        try {
+//            Class.forName("dalvik.system.CloseGuard")
+//                .getMethod("setEnabled", Boolean::class.javaPrimitiveType)
+//                .invoke(null, true)
+//        } catch (e: ReflectiveOperationException) {
+//            throw RuntimeException(e)
+//        }
         super.onCreate(savedInstanceState)
-        PrefManager.init(applicationContext)
         setContent {
             NewNoteTheme {
                 Column {
@@ -154,14 +187,15 @@ class BookListActivity : ComponentActivity() {
                 }
             }
         }
-
+        // Datastore action
         try {
             lastUri?.let {
                 return openRootDir(it)
             }
         } catch(_: Exception) {
-            showMessage("Can't open dir. Please re-open.")
+            toast("Can't open dir. Please re-open.")
         }
+        // UI Action
         getRootDirUrl.launch(null)
     }
 
@@ -171,7 +205,7 @@ class BookListActivity : ComponentActivity() {
             rootDir.createDirectory(newBookName)
             openRootDir(_url!!)
         } catch(_: Exception) {
-            showMessage("Can't create book directory ($newBookName).")
+            toast("Can't create book directory ($newBookName).")
         }
     }
 
@@ -267,16 +301,29 @@ fun TwoBook(books: List<FastFile>, thumbnails: List<Thumbnail>, leftIdx: Int, bo
 fun Book(bookName: String, bookSize : Pair<Dp, Dp>, thumbnail: Thumbnail, onOpenBook : ()->Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier= Modifier
         .clickable(onClick = onOpenBook)) {
-        Canvas(modifier= Modifier
-            .size(bookSize.first, bookSize.second)
-            .padding(5.dp, 10.dp)) {
-            val blendMode = thumbnail.bg?.let { bg->
+        ThumbnailImage(thumbnail = thumbnail, size = bookSize )
+        Text(bookName , fontSize = 20.sp)
+    }
+}
 
-                drawImage(bg.asImageBitmap(), dstSize = IntSize(size.width.toInt(), size.height.toInt()))
-                BlendMode.Multiply
-            } ?: BlendMode.SrcOver
-            drawImage(thumbnail.page.asImageBitmap(), dstSize = IntSize(size.width.toInt(), size.height.toInt()), blendMode=blendMode)
-        }
-        Text(bookName, fontSize = 20.sp)
+@Composable
+fun ThumbnailImage(thumbnail: Thumbnail, size: Pair<Dp, Dp>) {
+    Canvas(modifier= Modifier
+        .size(size.first, size.second)
+        .padding(5.dp, 10.dp)
+    ) {
+        // Ugly hack - the viewmodel should only have access to nicely formed thumbnails
+        val blendMode = thumbnail.bg?.let { bg ->
+            drawImage(
+                bg.asImageBitmap(),
+
+                )
+            BlendMode.Multiply
+        } ?: BlendMode.SrcOver
+        drawImage(
+            thumbnail.page.asImageBitmap(),
+
+            blendMode = blendMode
+        )
     }
 }
